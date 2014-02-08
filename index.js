@@ -1,9 +1,12 @@
 var express = require('express')
 var fs = require('fs')
 var mongodb = require('mongodb')
+var path = require('path')
 var RSVP = require('rsvp')
 
 var mongoUri = process.env.MONGOHQ_URL || 'mongodb://localhost/test'
+var basePath = process.env.BASEPATH || path.resolve(process.cwd(), './modules')
+
 var Promise = RSVP.Promise
 var app = express()
 var _db = null
@@ -62,12 +65,19 @@ function saveToDatabase(dbPromise, module) {
 
 // todo - handle module names that make invalid file
 function moduleFilename(module) {
-  return module.name +  module.version
+  return path.resolve(basePath, module.name + module.version) + '.tgz'
 }
 
 function saveToDisk(module) {
   var filename = moduleFilename(module)
-  var basepath = process.cwd
+  return new Promise(function(reject, resolve) {
+    fs.writeFile(filename, module.data, {encoding: 'base64'}, function(err) {
+      if (err) {
+        return reject(err)
+      }
+      resolve(true)
+    })
+  })
 }
 
 function handlePutModule(module) {
@@ -79,7 +89,6 @@ function handlePutModule(module) {
 }
 
 app.put('/module', function(req, res, next) {
-  console.log(req.body)
   handlePutModule(req.body).then(function() {
     res.send(201)
   }, next)
