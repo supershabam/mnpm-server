@@ -24,7 +24,9 @@ For now, I'm not trying to emulate the existing npm api. I'm just prototyping ou
 
 ### `GET /dependencies?name=#{name}&version=#{version}`
 
-Get the dependencies of a module. If the version is a hard version (no variables), then this is highly cachable. For now, everything stored in mnpm-server will be hard-versioned.
+Returns the dependencies of a module. Version must be a resolved (non-expression) version.
+
+Highly cacheable.
 
 Returns
 
@@ -35,11 +37,34 @@ Returns
   dependencies: [
     {
       name: String,
-      version: Semver
+      version: SemverExpression
     }
   ] // dev dependencies could be included here as well, but for now skipping
 }
 ```
+
+### `GET /versions?name=#{name}`
+
+Returns all versions of module. Use this to turn a SemverExpression into a resolved version number.
+
+Volatile.
+
+Returns
+
+`200 OK`
+
+```javascript
+{
+  versions: [
+    '0.0.0',
+    '0.0.1'
+  ]
+}
+```
+
+### `GET /checksum?name=#{name}&version=#{version}`
+
+Gets a checksum of a tarball for a packaged module at a specific version. Highly cacheable.
 
 ### `PUT /module`
 
@@ -81,10 +106,6 @@ Returns
   ]
 }
 ```
-
-### `GET /checksum?name=#{name}&version=#{version}`
-
-Gets a checksum of a tarball for a packaged module at a specific version. Highly cacheable.
 
 ## client
 
