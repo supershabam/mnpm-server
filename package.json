@@ -1,0 +1,23 @@
+{
+  "name": "mnpm-server",
+  "version": "0.0.0",
+  "description": "prototype to implement npm registry using linux package mirroring",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/supershabam/mnpm-server"
+  },
+  "keywords": [
+    "npm",
+    "mirror"
+  ],
+  "author": "ian@supershabam.com",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/supershabam/mnpm-server/issues"
+  },
+  "homepage": "https://github.com/supershabam/mnpm-server"
+}
