@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/supershabam/mnpm-server/issues"
   },
-  "homepage": "https://github.com/supershabam/mnpm-server"
+  "homepage": "https://github.com/supershabam/mnpm-server",
+  "dependencies": {
+    "express": "~3.4.8"
+  }
 }
