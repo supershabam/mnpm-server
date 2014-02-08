@@ -91,3 +91,7 @@ Gets a checksum of a tarball for a packaged module at a specific version. Highly
 The current npm client will not integrate with this server. Though, I could probably change the api (or build an mnpm-proxy) to accomodate the npm client.
 
 For prototyping, I'm shipping `mnpm` as a client. It will only install packages to your current working directory's `node_modules` folder.
+
+## license
+
+BSD-2
