@@ -63,7 +63,6 @@ function saveToDatabase(dbPromise, module) {
   })
 }
 
-// todo - handle module names that make invalid file
 function moduleFilename(module) {
   return path.resolve(basePath, module.name + module.version) + '.tgz'
 }
