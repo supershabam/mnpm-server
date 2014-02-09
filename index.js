@@ -132,6 +132,9 @@ function getVersions(dbPromise, name) {
         if (err) {
           return reject(err)
         }
+        if (modules.length === 0) {
+          return reject(new Error('module not found'))
+        }
         var versions = modules.map(function(module) {
           return module.version
         })
