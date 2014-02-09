@@ -1,22 +1,29 @@
 # mnpm-server
 
-prototype to implement npm based on linux package mirroring
+prototype to implement the purpose of npm in a simpler, more scalable, way.
 
 ## why
 
-npm does two tasks that should be separated: registry tasks, and mirroring tasks. Npm should just serve as a registry and point at where to get mirrored tarballs. This is an experiment to just implement a registry.
+Because I haven't written a package manager for NodeJS yet.
+
+I think that NPM is great, but does too much. I think it can be just as powerful while embracing a simpler implementation.
+
+Ultimately, I want the NPM registry to be dumber, the tarballs to be distributed via dumb http/rsync mirroing, and the NPM client to be smarter in utilizing the registry and mirrors for ultimate speed.
 
 ## how
 
-The registry has the following tasks:
+The following tasks are implemented by the registry:
 
-* manage what exists in mnpm
-* serve as authority for checksums of tarballs
-* accept new modules and ensure the tarball gets seeded into the mirrors
+* what versions of a package exist
+* what is the tarball checksum of a package
 
-The main difference between mnpm and npm is where tarballs are stored. It's a bad idea (nomatter what database you use) to put large binary files into your business logic database.
+That is it!
 
-Replication of large files isn't a new task, so let's use tried-and-true technologies for managing fanning out of large sets of immutable data: rsync.
+I'm not building in user authentication or uploading packages (yet). Since NPM is still the source of truth, a separate process should tail NPM and pull the registry updates and tarballs over to the mnpm system.
+
+### mirroring
+
+TODO
 
 ## api
 
