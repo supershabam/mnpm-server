@@ -80,7 +80,7 @@ Payload
   dependencies: [
     {
       name: String,
-      version: Semver
+      version: SemverExpression
     }
   ],
   tarball: Base64
