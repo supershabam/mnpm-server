@@ -23,36 +23,17 @@ I'm not building in user authentication or uploading packages (yet). Since NPM i
 
 ### mirroring
 
-TODO
+Following the linux package mirrors: there should be a seed host that a limited number of trusted hosts should rsync themselves from. From these trusted hosts, others may then coordinate to rsync from them.
+
+As a new package in inserted into the existing NPM system, a tailing process should notice new packages, and add the tarball to the seed host (as well as inserting the data into the registry e.g. name, version, and tarball checksum).
 
 ## api
-
-For now, I'm not trying to emulate the existing npm api. I'm just prototyping out an idea.
-
-### `GET /dependencies?name=#{name}&version=#{version}`
-
-Returns the dependencies of a module. Version must be a resolved (non-expression) version.
-
-Highly cacheable.
-
-Returns
-
-`200 OK`
-
-```javascript
-{
-  dependencies: [
-    {
-      name: String,
-      version: SemverExpression
-    }
-  ] // dev dependencies could be included here as well, but for now skipping
-}
-```
 
 ### `GET /versions?name=#{name}`
 
 Returns all versions of module. Use this to turn a SemverExpression into a resolved version number.
+
+I'm convinced that a client can do this themselved (by looking at a mirror). That's if we can enforce a common path format for hosting modules, and http is the only medium (might be trickier with systems that don't have a good idea of a directory listing).
 
 Volatile.
 
@@ -72,47 +53,6 @@ Returns
 ### `GET /checksum?name=#{name}&version=#{version}`
 
 Gets a checksum of a tarball for a packaged module at a specific version. Highly cacheable.
-
-### `PUT /module`
-
-Puts a module into the registry. No authentication for now. Errors if you try to publish an existing module-version
-
-Payload
-
-```javascript
-// application/json
-{
-  name: String,
-  version: Semver,
-  dependencies: [
-    {
-      name: String,
-      version: SemverExpression
-    }
-  ],
-  tarball: Base64
-}
-```
-
-Returns
-
-`201 No Content`
-
-### `GET /mirrors`
-
-Gets a list of mirrors that host tarballs.
-
-Returns
-
-`200 OK`
-
-```javascript
-{
-  mirrors: [
-    'http://mirror.example.com/basepath'
-  ]
-}
-```
 
 ## client
 
