@@ -91,10 +91,10 @@ function handlePutModule(module) {
 function handleGetDependencies(params) {
   return new Promise(function(resolve, reject) {
     if (typeof params.name !== 'string') {
-      reject(new Error('expected name parameter'))
+      return reject(new Error('expected name parameter'))
     }
     if (typeof params.version !== 'string') {
-      reject(new Error('expected version parameter'))
+      return reject(new Error('expected version parameter'))
     }
     getDependencies(db(), params.name, params.version).then(resolve, reject)
   })
@@ -116,6 +116,31 @@ function getDependencies(dbPromise, name, version) {
   })
 }
 
+function handleGetVersions(params) {
+  return new Promise(function(resolve, reject) {
+    if (typeof params.name !== 'string') {
+      return reject(new Error('expected name parameter')) 
+    }
+    getVersions(db(), params.name).then(resolve, reject)
+  })
+}
+
+function getVersions(dbPromise, name) {
+  return dbPromise.then(function(db) {
+    return new Promise(function(resolve, reject) {
+      db.collection('modules').find({name: name}).toArray(function(err, modules) {
+        if (err) {
+          return reject(err)
+        }
+        var versions = modules.map(function(module) {
+          return module.version
+        })
+        resolve(versions)
+      })
+    })
+  })
+}
+
 app.put('/module', function(req, res, next) {
   handlePutModule(req.body).then(function() {
     res.send(201)
@@ -125,6 +150,12 @@ app.put('/module', function(req, res, next) {
 app.get('/dependencies', function(req, res, next) {
   handleGetDependencies(req.query).then(function(dependencies) {
     res.json({dependencies: dependencies})
+  }, next)
+})
+
+app.get('/versions', function(req, res, next) {
+  handleGetVersions(req.query).then(function(versions) {
+    res.json({versions: versions})
   }, next)
 })
 
