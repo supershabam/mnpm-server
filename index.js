@@ -11,6 +11,7 @@ var Promise = RSVP.Promise
 var app = express()
 var _db = null
 
+app.use(express.logger())
 app.use(express.bodyParser())
 
 function db() {
@@ -69,7 +70,7 @@ function moduleFilename(module) {
 
 function saveToDisk(module) {
   var filename = moduleFilename(module)
-  return new Promise(function(reject, resolve) {
+  return new Promise(function(resolve, reject) {
     fs.writeFile(filename, module.data, {encoding: 'base64'}, function(err) {
       if (err) {
         return reject(err)
@@ -87,9 +88,43 @@ function handlePutModule(module) {
   })
 }
 
+function handleGetDependencies(params) {
+  return new Promise(function(resolve, reject) {
+    if (typeof params.name !== 'string') {
+      reject(new Error('expected name parameter'))
+    }
+    if (typeof params.version !== 'string') {
+      reject(new Error('expected version parameter'))
+    }
+    getDependencies(db(), params.name, params.version).then(resolve, reject)
+  })
+}
+
+function getDependencies(dbPromise, name, version) {
+  return dbPromise.then(function(db) {
+    return new Promise(function(resolve, reject) {
+      db.collection('modules').findOne({name: name, version: version}, function(err, module) {
+        if (err) {
+          return reject(err)
+        }
+        if (module === null) {
+          return reject(new Error('module not found'))
+        }
+        resolve(module.dependencies)
+      })
+    })
+  })
+}
+
 app.put('/module', function(req, res, next) {
   handlePutModule(req.body).then(function() {
     res.send(201)
+  }, next)
+})
+
+app.get('/dependencies', function(req, res, next) {
+  handleGetDependencies(req.query).then(function(dependencies) {
+    res.json({dependencies: dependencies})
   }, next)
 })
 
