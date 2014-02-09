@@ -6,14 +6,17 @@ var RSVP = require('rsvp')
 
 var mongoUri = process.env.MONGOHQ_URL || 'mongodb://localhost/test'
 var basePath = process.env.BASEPATH || path.resolve(process.cwd(), './modules')
+var mirrors = [
+  'mirror.supershabam.com'
+]
 
 var Promise = RSVP.Promise
 var app = express()
-var _db = null
 
 app.use(express.logger())
 app.use(express.bodyParser())
 
+var _db = null
 function db() {
   if (!_db) {
     _db = new Promise(function(resolve, reject) {
@@ -160,6 +163,10 @@ app.get('/versions', function(req, res, next) {
   handleGetVersions(req.query).then(function(versions) {
     res.json({versions: versions})
   }, next)
+})
+
+app.get('/mirrors', function(req, res) {
+  res.json({mirrors: mirrors})
 })
 
 app.listen(process.env.PORT || 9001)
