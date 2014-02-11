@@ -1,162 +1,39 @@
 var express = require('express')
 var fs = require('fs')
-var mongodb = require('mongodb')
+var nano = require('nano')
 var path = require('path')
 var RSVP = require('rsvp')
 
-var mongoUri = process.env.MONGOHQ_URL || 'mongodb://localhost/test'
-var basePath = process.env.BASEPATH || path.resolve(process.cwd(), './modules')
-var mirrors = [
-  'mirror.supershabam.com'
-]
-
 var Promise = RSVP.Promise
 var app = express()
+var couch = nano(process.env.COUCHDB_URI || 'http://localhost:5984')
+var registry = couch.use(process.env.COUCHDB_DATABASE || 'registry')
+var port = process.env.PORT || 8080
 
 app.use(express.logger())
-app.use(express.bodyParser())
 
-var _db = null
-function db() {
-  if (!_db) {
-    _db = new Promise(function(resolve, reject) {
-      mongodb.MongoClient.connect(mongoUri, function(err, db) {
-        if (err) {
-          return reject(err)
-        } 
-        db.collection('modules').ensureIndex({name: 1, version: 1}, {unique: true}, function(err) {
-          if (err) {
-            return reject(err)
-          }
-          resolve(db)
-        })
-      })
-    })
-  }
-  return _db
-}
-
-function ensureParameters(module) {
-  return new Promise(function(resolve, reject) {
-    if (typeof module.name !== 'string') {
-      return reject(new Error('expected name parameter'))
+app.param('module', function(req, res, next, module) {
+  registry.get(module, function(err, doc) {
+    if (err) {
+      return next(err)
     }
-    if (typeof module.version !== 'string') {
-      return reject(new Error('expected version parameter'))
+    if (!doc) {
+      return next(new Error('unable to find module ' + module))
     }
-    resolve(true)
-  })
-}
-
-function saveToDatabase(dbPromise, module) {
-  return dbPromise.then(function(db) {
-    return new Promise(function(resolve, reject) {
-      var doc = {
-        name: module.name,
-        version: module.version,
-        dependencies: module.dependencies
-      }
-      db.collection('modules').insert(doc, function(err) {
-        if (err) {
-          reject(err)
-        } else {
-          resolve()
-        }
-      })
-    })
-  })
-}
-
-function moduleFilename(module) {
-  return path.resolve(basePath, module.name + module.version) + '.tgz'
-}
-
-function saveToDisk(module) {
-  var filename = moduleFilename(module)
-  return new Promise(function(resolve, reject) {
-    fs.writeFile(filename, module.data, {encoding: 'base64'}, function(err) {
-      if (err) {
-        return reject(err)
-      }
-      resolve(true)
-    })
-  })
-}
-
-function handlePutModule(module) {
-  return ensureParameters(module).then(function() {
-    return saveToDatabase(db(), module).then(function() {
-      return saveToDisk(module)
-    })
-  })
-}
-
-function handleGetDependencies(params) {
-  return new Promise(function(resolve, reject) {
-    if (typeof params.name !== 'string') {
-      return reject(new Error('expected name parameter'))
-    }
-    if (typeof params.version !== 'string') {
-      return reject(new Error('expected version parameter'))
-    }
-    getDependencies(db(), params.name, params.version).then(resolve, reject)
-  })
-}
-
-function getDependencies(dbPromise, name, version) {
-  return dbPromise.then(function(db) {
-    return new Promise(function(resolve, reject) {
-      db.collection('modules').findOne({name: name, version: version}, function(err, module) {
-        if (err) {
-          return reject(err)
-        }
-        if (module === null) {
-          return reject(new Error('module not found'))
-        }
-        resolve(module.dependencies)
-      })
-    })
-  })
-}
-
-function handleGetVersions(params) {
-  return new Promise(function(resolve, reject) {
-    if (typeof params.name !== 'string') {
-      return reject(new Error('expected name parameter')) 
-    }
-    getVersions(db(), params.name).then(resolve, reject)
-  })
-}
-
-function getVersions(dbPromise, name) {
-  return dbPromise.then(function(db) {
-    return new Promise(function(resolve, reject) {
-      db.collection('modules').find({name: name}).toArray(function(err, modules) {
-        if (err) {
-          return reject(err)
-        }
-        if (modules.length === 0) {
-          return reject(new Error('module not found'))
-        }
-        var versions = modules.map(function(module) {
-          return module.version
-        })
-        resolve(versions)
-      })
-    })
-  })
-}
-
-app.get('/:module', function(req, res, next) {
-  res.json({
-    versions: []
+    req.module = doc
+    next()
   })
 })
 
-app.get('/versions', function(req, res, next) {
-  handleGetVersions(req.query).then(function(versions) {
-    res.json({versions: versions})
-  }, next)
+// not a standard http mirror function, but we'll use it for now
+app.get('/:module', function(req, res, next) {
+  res.json({
+    files: Object.keys(req.module.versions)
+  })
+})
+
+app.get('/:module/:file', function(req, res, next) {
+  registry.attachment.get(req.module.name, req.params.file).pipe(res)
 })
 
 app.listen(process.env.PORT || 9001)
