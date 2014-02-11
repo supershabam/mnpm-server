@@ -147,26 +147,16 @@ function getVersions(dbPromise, name) {
   })
 }
 
-app.put('/module', function(req, res, next) {
-  handlePutModule(req.body).then(function() {
-    res.send(201)
-  }, next)
-})
-
-app.get('/dependencies', function(req, res, next) {
-  handleGetDependencies(req.query).then(function(dependencies) {
-    res.json({dependencies: dependencies})
-  }, next)
+app.get('/:module', function(req, res, next) {
+  res.json({
+    versions: []
+  })
 })
 
 app.get('/versions', function(req, res, next) {
   handleGetVersions(req.query).then(function(versions) {
     res.json({versions: versions})
   }, next)
-})
-
-app.get('/mirrors', function(req, res) {
-  res.json({mirrors: mirrors})
 })
 
 app.listen(process.env.PORT || 9001)
